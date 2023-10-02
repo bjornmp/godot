@@ -1384,7 +1384,7 @@ void GraphEdit::gui_input(const Ref<InputEvent> &p_ev) {
 				}
 			}
 
-			emit_signal(SNAME("close_nodes_request"), nodes);
+			emit_signal(SNAME("delete_nodes_request"), nodes);
 			accept_event();
 		}
 	}
@@ -1890,20 +1890,24 @@ void GraphEdit::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("connection_request", PropertyInfo(Variant::STRING_NAME, "from_node"), PropertyInfo(Variant::INT, "from_port"), PropertyInfo(Variant::STRING_NAME, "to_node"), PropertyInfo(Variant::INT, "to_port")));
 	ADD_SIGNAL(MethodInfo("disconnection_request", PropertyInfo(Variant::STRING_NAME, "from_node"), PropertyInfo(Variant::INT, "from_port"), PropertyInfo(Variant::STRING_NAME, "to_node"), PropertyInfo(Variant::INT, "to_port")));
-	ADD_SIGNAL(MethodInfo("popup_request", PropertyInfo(Variant::VECTOR2, "position")));
-	ADD_SIGNAL(MethodInfo("duplicate_nodes_request"));
-	ADD_SIGNAL(MethodInfo("copy_nodes_request"));
-	ADD_SIGNAL(MethodInfo("paste_nodes_request"));
-	ADD_SIGNAL(MethodInfo("node_selected", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_RESOURCE_TYPE, "Node")));
-	ADD_SIGNAL(MethodInfo("node_deselected", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_RESOURCE_TYPE, "Node")));
 	ADD_SIGNAL(MethodInfo("connection_to_empty", PropertyInfo(Variant::STRING_NAME, "from_node"), PropertyInfo(Variant::INT, "from_port"), PropertyInfo(Variant::VECTOR2, "release_position")));
 	ADD_SIGNAL(MethodInfo("connection_from_empty", PropertyInfo(Variant::STRING_NAME, "to_node"), PropertyInfo(Variant::INT, "to_port"), PropertyInfo(Variant::VECTOR2, "release_position")));
-	ADD_SIGNAL(MethodInfo("close_nodes_request", PropertyInfo(Variant::ARRAY, "nodes", PROPERTY_HINT_ARRAY_TYPE, "StringName")));
+	ADD_SIGNAL(MethodInfo("connection_drag_started", PropertyInfo(Variant::STRING_NAME, "from_node"), PropertyInfo(Variant::INT, "from_port"), PropertyInfo(Variant::BOOL, "is_output")));
+	ADD_SIGNAL(MethodInfo("connection_drag_ended"));
+
+	ADD_SIGNAL(MethodInfo("copy_nodes_request"));
+	ADD_SIGNAL(MethodInfo("paste_nodes_request"));
+	ADD_SIGNAL(MethodInfo("duplicate_nodes_request"));
+	ADD_SIGNAL(MethodInfo("delete_nodes_request", PropertyInfo(Variant::ARRAY, "nodes", PROPERTY_HINT_ARRAY_TYPE, "StringName")));
+
+	ADD_SIGNAL(MethodInfo("node_selected", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_RESOURCE_TYPE, "Node")));
+	ADD_SIGNAL(MethodInfo("node_deselected", PropertyInfo(Variant::OBJECT, "node", PROPERTY_HINT_RESOURCE_TYPE, "Node")));
+
+	ADD_SIGNAL(MethodInfo("popup_request", PropertyInfo(Variant::VECTOR2, "position")));
+
 	ADD_SIGNAL(MethodInfo("begin_node_move"));
 	ADD_SIGNAL(MethodInfo("end_node_move"));
 	ADD_SIGNAL(MethodInfo("scroll_offset_changed", PropertyInfo(Variant::VECTOR2, "offset")));
-	ADD_SIGNAL(MethodInfo("connection_drag_started", PropertyInfo(Variant::STRING_NAME, "from_node"), PropertyInfo(Variant::INT, "from_port"), PropertyInfo(Variant::BOOL, "is_output")));
-	ADD_SIGNAL(MethodInfo("connection_drag_ended"));
 
 	BIND_ENUM_CONSTANT(SCROLL_ZOOMS);
 	BIND_ENUM_CONSTANT(SCROLL_PANS);
@@ -1988,28 +1992,28 @@ GraphEdit::GraphEdit() {
 	_update_zoom_label();
 
 	zoom_minus_button = memnew(Button);
-	zoom_minus_button->set_flat(true);
+	zoom_minus_button->set_theme_type_variation("FlatButton");
 	menu_hbox->add_child(zoom_minus_button);
 	zoom_minus_button->set_tooltip_text(RTR("Zoom Out"));
 	zoom_minus_button->connect("pressed", callable_mp(this, &GraphEdit::_zoom_minus));
 	zoom_minus_button->set_focus_mode(FOCUS_NONE);
 
 	zoom_reset_button = memnew(Button);
-	zoom_reset_button->set_flat(true);
+	zoom_reset_button->set_theme_type_variation("FlatButton");
 	menu_hbox->add_child(zoom_reset_button);
 	zoom_reset_button->set_tooltip_text(RTR("Zoom Reset"));
 	zoom_reset_button->connect("pressed", callable_mp(this, &GraphEdit::_zoom_reset));
 	zoom_reset_button->set_focus_mode(FOCUS_NONE);
 
 	zoom_plus_button = memnew(Button);
-	zoom_plus_button->set_flat(true);
+	zoom_plus_button->set_theme_type_variation("FlatButton");
 	menu_hbox->add_child(zoom_plus_button);
 	zoom_plus_button->set_tooltip_text(RTR("Zoom In"));
 	zoom_plus_button->connect("pressed", callable_mp(this, &GraphEdit::_zoom_plus));
 	zoom_plus_button->set_focus_mode(FOCUS_NONE);
 
 	show_grid_button = memnew(Button);
-	show_grid_button->set_flat(true);
+	show_grid_button->set_theme_type_variation("FlatButton");
 	show_grid_button->set_toggle_mode(true);
 	show_grid_button->set_tooltip_text(RTR("Toggle the visual grid."));
 	show_grid_button->connect("pressed", callable_mp(this, &GraphEdit::_show_grid_toggled));
@@ -2018,7 +2022,7 @@ GraphEdit::GraphEdit() {
 	menu_hbox->add_child(show_grid_button);
 
 	toggle_snapping_button = memnew(Button);
-	toggle_snapping_button->set_flat(true);
+	toggle_snapping_button->set_theme_type_variation("FlatButton");
 	toggle_snapping_button->set_toggle_mode(true);
 	toggle_snapping_button->set_tooltip_text(RTR("Toggle snapping to the grid."));
 	toggle_snapping_button->connect("pressed", callable_mp(this, &GraphEdit::_snapping_toggled));
@@ -2036,7 +2040,7 @@ GraphEdit::GraphEdit() {
 	menu_hbox->add_child(snapping_distance_spinbox);
 
 	minimap_button = memnew(Button);
-	minimap_button->set_flat(true);
+	minimap_button->set_theme_type_variation("FlatButton");
 	minimap_button->set_toggle_mode(true);
 	minimap_button->set_tooltip_text(RTR("Toggle the graph minimap."));
 	minimap_button->connect("pressed", callable_mp(this, &GraphEdit::_minimap_toggled));
@@ -2045,7 +2049,7 @@ GraphEdit::GraphEdit() {
 	menu_hbox->add_child(minimap_button);
 
 	layout_button = memnew(Button);
-	layout_button->set_flat(true);
+	layout_button->set_theme_type_variation("FlatButton");
 	menu_hbox->add_child(layout_button);
 	layout_button->set_tooltip_text(RTR("Automatically arrange selected nodes."));
 	layout_button->connect("pressed", callable_mp(this, &GraphEdit::arrange_nodes));
